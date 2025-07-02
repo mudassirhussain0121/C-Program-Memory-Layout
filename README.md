@@ -83,5 +83,50 @@ Mirco-controller memory map divided into several different region and each regio
 	- This region manages the chip’s fundamental operations, such as clock control, power management, and debug features.
 
 
+## C program Memory Model
+
+In embedded C programming, the Code (Flash/ROM) and RAM (SRAM) regions are the most critical memory areas because they directly store and execute the application.
+
+A typical memory map of a C program consists of the following sections.
+- A text segment
+- Initialized data segment
+- Uninitialized data segment
+- Stack
+- Heap
+
+
+```sh
+
+	High Memory  ----------------------------------
+  	 Address    |                                  |
+  	            |               STACK              |
+  	            |         (Growns Downwards)       |
+  	            |                |                 |
+  	            |                |                 |
+  	            |                v                 |
+	            |                                  |
+  	            |                                  |
+  	            |                                  |
+  	            |                ^                 |
+  	            |                |                 |
+  	            |                |                 |
+  	            |         (Growns Upward)          |
+  	            |               HEAP               |
+  	            |                                  |
+	            |----------------------------------|
+  	            |                                  |
+  	            |     Uninitialized data (.bss)    |
+  	            |                                  |
+	            |----------------------------------|
+  	            |                                  |
+  	            |     Initialized data (.data)     |
+  	            |                                  |
+	            |----------------------------------|
+  	            |                                  |
+  	            |           Text (.text)           |
+  	            |                                  |
+	Low Memory   ----------------------------------
+	 Address
+```
 
 
