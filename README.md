@@ -126,9 +126,9 @@ A typical memory map of a C program consists of the following sections:
 
 1. Flash (Non-Volatile Memory)
 
-- .text: Executable code (machine instructions).
-- .rodata: Read-only constants (const variables).
-- .data (initialized data): Initial values of global/static variables (copied to RAM at startup).
+- `.text`  : Executable code (machine instructions).
+- `.rodata`: Read-only constants (const variables).
+- `.data`  : (initialized data): Initial values of global/static variables (copied to RAM at startup).
 
 ```
 const int x = 5;    // → `.rodata` (Flash)
@@ -138,10 +138,10 @@ void foo() { ... }  // → `.text` (Flash)
 
 2. RAM (Volatile Memory)
 
-- .data (runtime): Actual storage for initialized global/static variables (loaded from Flash at startup).
-- .bss: Zero-initialized or uninitialized global/static variables (RAM only, no Flash footprint).
-- Heap: Dynamically allocated memory (malloc/free).
-- Stack: Local variables, function call frames.
+- `.data`: (at runtime): Actual storage for initialized global/static variables (loaded from Flash at startup or runtime).
+- `.bss` : Zero-initialized or uninitialized global/static variables (RAM only, no Flash footprint).
+- `Heap` : Dynamically allocated memory (malloc/free).
+- `Stack`: Local variables, function call frames.
 
 ```
 int a;                  // → `.bss` (RAM, zero-initialized)
@@ -153,7 +153,7 @@ int main() {
 ```
 
 - <ins>Code or Text Segment (.text)</ins>: (RO section)
-	- The .text segment is the memory region containing:
+	- The `.text` segment is the memory region containing:
 		- Executable machine code (compiled program instructions or final binary)
 		- Read-only program data (constants, literals)
 	- Storage Location:
@@ -166,7 +166,7 @@ char *str = "Hello";                 // String literal
 ```
 
 - <ins>Initialized Data Segment (.data)</ins>: (RW section)
-	- The .data section stores all explicitly initialized global and static variables in a C/C++ program. These variables are modifiable at runtime, read-write (RW) section.
+	- The `.data` section stores all explicitly initialized global and static variables in a C/C++ program. These variables are modifiable at runtime, read-write (RW) section.
 	- Key characteristics is dual memory allocation:
 		- Initial values are stored in Flash/ROM (included in program image)
 		- At runtime values are occupy RAM (copied during startup)
@@ -195,20 +195,23 @@ int main() {
 
 - <ins>Downloadable Image Size (dec)</ins>:
 	- In embedded systems, the total on-chip memory footprint of a program (often called dec or "downloadable image size") is the sum of three key sections:
-		- .text (Code)
-		- .data (Initialized Data)
-		- .bss (Zero-Initialized Data)
+		- `.text` (Code)
+		- `.data` (Initialized Data)
+		- `.bss` (Zero-Initialized Data)
 	- This relationship is expressed as:
-		- dec = .text + .data + .bss
+		- `dec = .text + .data + .bss`
+		- Following image showing size of .text, .data and .bss sections. 
+
+![Application Compilation Output](/images/application_build_output.png)
 
 - <ins>Summary</ins>:
-	- .text : is your code, and constants (and also the vector table).
-	- .data : is for initialized variables. This is count towards both RAM and FLASH. The initialized value allocates space in FLASH which then is copied from ROM to RAM in the startup code.
-	- .bss  : is for the uninitialized data in RAM which is initialized with zero in the startup code.
+	- `.text`: is your code, and constants (and also the vector table).
+	- `.data`: is for initialized variables. This is count towards both RAM and FLASH. The initialized value allocates space in FLASH which then is copied from ROM to RAM in the startup code.
+	- `.bss` : is for the uninitialized data in RAM which is initialized with zero in the startup code.
 
 ```
 - Flash (ROM) = .text (code) + .rodata (constants) + initial values of .data.
-- RAM (SRAM)  = Runtime .data + .bss + heap + stack.
+- RAM (SRAM)  = .data (copied at runtime) + .bss + heap + stack.
 - Rule of Thumb:
     - Read-only?  → Flash.
     - Read-write? → RAM.
