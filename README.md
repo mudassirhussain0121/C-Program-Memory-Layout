@@ -7,8 +7,7 @@ For reference, the memory map of the ARM Cortex-M4 microcontroller is provided b
 
 Mirco-controller memory map divided into several different region and each region has specific purpose or function.
 
-```sh
-
+```
  	0xFFFFFFFF   ----------------------------------
   	            |                                  |
   	            |              SYSTEM              |
@@ -87,46 +86,130 @@ Mirco-controller memory map divided into several different region and each regio
 
 In embedded C programming, the Code (Flash/ROM) and RAM (SRAM) regions are the most critical memory areas because they directly store and execute the application.
 
-A typical memory map of a C program consists of the following sections.
+A typical memory map of a C program consists of the following sections:
 - A text segment
 - Initialized data segment
 - Uninitialized data segment
 - Stack
 - Heap
 
-
-```sh
-
-	High Memory  ----------------------------------
-  	 Address    |                                  |
-  	            |               STACK              |
-  	            |         (Growns Downwards)       |
+```
+	High Memory  ----------------------------------  |----------------------------------|
+  	 Address    |                                  |                             |
+  	            |              STACK               |                             |
+  	            |         (Growns Downwards)       |                             |
+  	            |                |                 |                             |
+  	            |                v                 |                             |
+	            |                                  |                             |
+  	            |                                  |                             |
+  	            |                                  |                             |
+  	            |                ^                 |                             |
   	            |                |                 |
-  	            |                |                 |
-  	            |                v                 |
-	            |                                  |
-  	            |                                  |
-  	            |                                  |
-  	            |                ^                 |
-  	            |                |                 |
-  	            |                |                 |
-  	            |         (Growns Upward)          |
+  	            |         (Growns Upward)          |                            RAM
   	            |               HEAP               |
-  	            |                                  |
-	            |----------------------------------|
-  	            |                                  |
-  	            |     Uninitialized data (.bss)    |
-  	            |                                  |
-	            |----------------------------------|
-  	            |                                  |
-  	            |     Initialized data (.data)     |
-  	            |                                  |
-	            |----------------------------------|
-  	            |                                  |
-  	            |           Text (.text)           |
-  	            |                                  |
-	Low Memory   ----------------------------------
+  	            |                                  |                             |
+	            |----------------------------------|                             |
+  	            |                                  |                             |
+  	            |     Uninitialized data (.bss)    |                             |
+  	            |                                  |                             |
+	            |----------------------------------| |--------------------|      |
+  	            |                                  |                  |          |
+  	            |     Initialized data (.data)     |                  |          |
+  	            |                                  |                             |
+	            |----------------------------------| |---------|    FLASH   |----------|
+  	            |                                  |     |
+  	            |           Text (.text)           |    CODE          |
+  	            |                                  |     |            |
+	Low Memory   ----------------------------------  |--------------------|
 	 Address
 ```
 
+1. Flash (Non-Volatile Memory)
 
+- .text: Executable code (machine instructions).
+- .rodata: Read-only constants (const variables).
+- .data (initialized data): Initial values of global/static variables (copied to RAM at startup).
+
+```
+const int x = 5;    // → `.rodata` (Flash)
+int y = 10;         // Initial value → `.data` (Flash), runtime value → RAM
+void foo() { ... }  // → `.text` (Flash)
+```
+
+2. RAM (Volatile Memory)
+
+- .data (runtime): Actual storage for initialized global/static variables (loaded from Flash at startup).
+- .bss: Zero-initialized or uninitialized global/static variables (RAM only, no Flash footprint).
+- Heap: Dynamically allocated memory (malloc/free).
+- Stack: Local variables, function call frames.
+
+```
+int a;                  // → `.bss` (RAM, zero-initialized)
+static int b = 20;      // Initial value → `.data` (Flash), runtime → RAM
+int main() {
+    int c = 30;         // → Stack (RAM)
+    int *d = (int*)malloc(4*sizeof(int)); // → Heap (RAM)
+}
+```
+
+- <ins>Code or Text Segment (.text)</ins>: (RO section)
+	- The .text segment is the memory region containing:
+		- Executable machine code (compiled program instructions or final binary)
+		- Read-only program data (constants, literals)
+	- Storage Location:
+		- Resides in FLASH/ROM memory (non-volatile)
+
+```
+void main() { /* Function code */ }  // Executable instructions
+const int config = 10;               // Read-only constant
+char *str = "Hello";                 // String literal
+```
+
+- <ins>Initialized Data Segment (.data)</ins>: (RW section)
+	- The .data section stores all explicitly initialized global and static variables in a C/C++ program. These variables are modifiable at runtime, read-write (RW) section.
+	- Key characteristics is dual memory allocation:
+		- Initial values are stored in Flash/ROM (included in program image)
+		- At runtime values are occupy RAM (copied during startup)
+
+```
+int global_init = 10;         // → .data (RW)
+static int static_init = 20;  // → .data (RW)
+```
+
+- <ins>Uninitialized Data Segment (.bss)</ins>: (ZI section)
+	- Stores global and static variables that are either:
+		- Explicitly initialized to zero (e.g., int x = 0;)
+		- Implicitly uninitialized (e.g., int y; in global/static scope)
+	- Key Behavior:
+		- The compiler/linker allocates space for these variables in RAM but does not store their initial values in Flash (unlike .data).
+		- At startup, the C runtime (CRT) initializes the entire .bss section to zero before main() executes.
+
+```
+int global_var;         // → .bss (RAM, implicitly zero-initialized)
+static int static_var;  // → .bss (RAM, implicitly zero-initialized)
+
+int main() {
+  int local_var;        // → Stack (RAM, *uninitialized*, contains garbage!)
+}  
+```
+
+- <ins>Downloadable Image Size (dec)</ins>:
+	- In embedded systems, the total on-chip memory footprint of a program (often called dec or "downloadable image size") is the sum of three key sections:
+		- .text (Code)
+		- .data (Initialized Data)
+		- .bss (Zero-Initialized Data)
+	- This relationship is expressed as:
+		- dec = .text + .data + .bss
+
+- <ins>Summary</ins>:
+	- .text : is your code, and constants (and also the vector table).
+	- .data : is for initialized variables. This is count towards both RAM and FLASH. The initialized value allocates space in FLASH which then is copied from ROM to RAM in the startup code.
+	- .bss  : is for the uninitialized data in RAM which is initialized with zero in the startup code.
+
+```
+- Flash (ROM) = .text (code) + .rodata (constants) + initial values of .data.
+- RAM (SRAM)  = Runtime .data + .bss + heap + stack.
+- Rule of Thumb:
+    - Read-only?  → Flash.
+    - Read-write? → RAM.
+```
